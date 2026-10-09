@@ -1,22 +1,23 @@
 <?php
 namespace CCR\Controller;
 
+use AppKernel\PerformanceMap;
+use AppKernel\Report;
+use CCR\DB;
+use CCR\Log;
+use CCR\Security\Attributes\CenterRelatedRequired;
+use CCR\Security\Attributes\MgrRequired;
 use DataWarehouse\Access\MetricExplorer;
 use DateTime;
-
+use Exception;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\HttpFoundation\ParameterBag;
 use Symfony\Component\DependencyInjection\ParameterBag\ContainerBagInterface;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
-use Psr\Log\LoggerInterface;
 use Twig\Environment;
-
-use Exception;
-use CCR\DB;
-use AppKernel\PerformanceMap;
-use AppKernel\Report;
 
 /**
  * Class AppKernelControllerProvider
@@ -48,11 +49,11 @@ class AppKernelsController extends BaseController
     public function __construct(LoggerInterface $logger, Environment $twig, ContainerBagInterface $parameters)
     {
         parent::__construct($logger, $twig, $parameters);
-        $this->dbLogger = \CCR\Log::factory('rest.logger.db', array(
+        $this->dbLogger = Log::factory('rest.logger.db', array(
             'console' => false,
             'file' => false,
             'mail' => false,
-            'dbLogLevel' => \CCR\Log::INFO
+            'dbLogLevel' => Log::INFO
         ));
     }
 
@@ -695,12 +696,10 @@ class AppKernelsController extends BaseController
      *                              success: A boolean indicating if the call was successful.
      *                              message: A human-readable message about what occurred.
      */
+    #[MgrRequired]
     #[Route('/control_regions', methods: ["PUT"])]
     public function createOrUpdateControlRegions(Request $request, bool $update = true): Response
     {
-        // Ensure that the user is a manager.
-        $this->authorize($request, array(ROLE_ID_MANAGER));
-
         // Get an app kernel database connection.
         $db = new \AppKernel\AppKernelDb($this->dbLogger);
 
@@ -757,12 +756,10 @@ class AppKernelsController extends BaseController
      *                              success: A boolean indicating if the call was successful.
      *                              message: A human-readable message about what occurred.
      */
+    #[MgrRequired]
     #[Route('/control_regions', methods: ['DELETE'])]
     public function deleteControlRegions(Request $request): Response
     {
-        // Ensure that the user is a manager.
-        $this->authorize($request, array(ROLE_ID_MANAGER));
-
         // Get an app kernel database connection.
         $db = new \AppKernel\AppKernelDb($this->dbLogger);
 
@@ -1675,10 +1672,11 @@ or "Show Details of Successful Tasks" options to see details on tasks';
      * @throws Exception if there is a problem instantiating \DateTime objects.
      * @throws Exception if the user making the request is not a Center [Director|Staff]
      */
+    #[CenterRelatedRequired]
     #[Route('/performance_map/raw', methods: ["GET"])]
     public function getRawPerformanceMap(Request $request): Response
     {
-        $user = $this->authorize($request);
+        $user = $this->getXDUser();
 
         // We need to ensure that only Center Director / Center Staff users are authorized to
         // utilize this endpoint. Note, we do not utilize the `requirements` parameter of the above
