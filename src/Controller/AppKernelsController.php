@@ -1,6 +1,7 @@
 <?php
 namespace CCR\Controller;
 
+use CCR\AppKernel\AppKernelDb;
 use AppKernel\PerformanceMap;
 use AppKernel\Report;
 use CCR\DB;
@@ -162,7 +163,7 @@ class AppKernelsController extends BaseController
     public function getDetails(Request $request): Response
     {
         $results = array();
-        $db = new \AppKernel\AppKernelDb();
+        $db = new AppKernelDb();
 
         // Extract the parameters that were sent
 
@@ -316,7 +317,7 @@ class AppKernelsController extends BaseController
     public function getDatasets(Request $request, $returnRawData = false)
     {
         $results = array();
-        $db = new \AppKernel\AppKernelDb();
+        $db = new AppKernelDb();
 
         // Extract the parameters that were sent
 
@@ -674,7 +675,7 @@ class AppKernelsController extends BaseController
         $resource_id = $this->getIntParam($request, 'resource_id', true);
         $ak_def_id = $this->getIntParam($request, 'ak_def_id', true);
         // TODO: wire in the db.logger.
-        $db = new \AppKernel\AppKernelDb($this->dbLogger);
+        $db = new AppKernelDb($this->dbLogger);
         $results = $db->getControlRegions($resource_id, $ak_def_id);
 
         return $this->json(array(
@@ -701,7 +702,7 @@ class AppKernelsController extends BaseController
     public function createOrUpdateControlRegions(Request $request, bool $update = true): Response
     {
         // Get an app kernel database connection.
-        $db = new \AppKernel\AppKernelDb($this->dbLogger);
+        $db = new AppKernelDb($this->dbLogger);
 
         // Load the application kernel definitions for the description
         $akList = $this->getAppKernelMapping($db);
@@ -761,7 +762,7 @@ class AppKernelsController extends BaseController
     public function deleteControlRegions(Request $request): Response
     {
         // Get an app kernel database connection.
-        $db = new \AppKernel\AppKernelDb($this->dbLogger);
+        $db = new AppKernelDb($this->dbLogger);
 
         // Load the application kernel definitions for the description
         $akList = $this->getAppKernelMapping($db);
@@ -1112,7 +1113,7 @@ class AppKernelsController extends BaseController
     {
         $response = array();
         try {
-            $ak_db = new \AppKernel\AppKernelDb();
+            $ak_db = new AppKernelDb();
 
             $user = $this->getUserFromRequest($request);
 
@@ -1159,7 +1160,7 @@ class AppKernelsController extends BaseController
     {
         $response = array();
         try {
-            $ak_db = new \AppKernel\AppKernelDb();
+            $ak_db = new AppKernelDb();
             $start_ts = date_timestamp_get(date_sub(date_create(), date_interval_create_from_date_string("90 days")));
 
             $all_app_kernels = $ak_db->getUniqueAppKernels();
@@ -1341,7 +1342,7 @@ class AppKernelsController extends BaseController
      * @return array                      An associative array of app kernel
      *                                    IDs to app kernels.
      */
-    private function getAppKernelMapping(\AppKernel\AppKernelDb $db)
+    private function getAppKernelMapping(AppKernelDb $db)
     {
         $appKernelDefs = $db->loadAppKernelDefinitions();
         $akList = array();
@@ -1358,7 +1359,7 @@ class AppKernelsController extends BaseController
      * @return array                      An associative array of resource
      *                                    IDs to resources.
      */
-    private function getResourceMapping(\AppKernel\AppKernelDb $db)
+    private function getResourceMapping(AppKernelDb $db)
     {
         $resourceDefs = $db->loadResources();
         $resourceList = array();
