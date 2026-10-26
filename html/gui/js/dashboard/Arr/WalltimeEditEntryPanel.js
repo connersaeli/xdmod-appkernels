@@ -11,10 +11,8 @@ XDMoD.Arr.WalltimeEditEntryPanel = Ext.extend(Ext.FormPanel, {
         border: false
     },
     initComponent: function () {
-        // CONFIGURE: this instance of the component with the newly created
-        //            items and default settings.
         Ext.apply(this, this._DEFAULT_CONFIG);
-        // CREATE: the required datastores.
+
         this._createDataStores();
 
         this._createButtons(this.buttonOptions || {});
@@ -27,11 +25,8 @@ XDMoD.Arr.WalltimeEditEntryPanel = Ext.extend(Ext.FormPanel, {
 
         this.form.url = '/akrr/walltime';
         this.form.method = 'PUT';
-    }, // initComponent
+    },
 
-    /**
-     * Component wide event listeners are defined here.
-     */
     listeners: {
         render: function () {
             this.resourcesLoaded = false;

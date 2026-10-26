@@ -248,5 +248,4 @@ XDMoD.Arr.WalltimePanel = Ext.extend(Ext.FormPanel, {
             ]
         });
     }
-
 });
