@@ -199,7 +199,7 @@ class ArrController extends BaseController
                 ));
             case 'send_report':
                 return $this->_sendReport($request, $user);
-            default :
+            default:
                 return $this->json(array(
                     'success' => false,
                     'operation' => 'operation not recognized',
@@ -238,7 +238,7 @@ class ArrController extends BaseController
                 return $this->loadNotificationSettings($user->getUserID());
             case 'load_default_notification_settings':
                 return $this->loadDefaultNotificationSettings();
-            default :
+            default:
                 return $this->json(array(
                     'success' => false,
                     'operation' => 'operation not recognized',
@@ -249,9 +249,11 @@ class ArrController extends BaseController
 
     private function getTaskSchedule(Request $request)
     {
-        $response['success'] = false;
-        $response['message'] = "";
-        $response['response'] = array();
+        $reponse = [
+            'success' => false;
+            'message' => "";
+            'response' => array();
+        ];
 
         try{
             $arr_db = DB::factory('akrr-db');
@@ -268,14 +270,13 @@ class ArrController extends BaseController
                                             parent_task_id
                                     FROM scheduled_tasks'
             );
-            $bundle=array();
+            $bundle = array();
             foreach ($scheduled_tasks as &$task) {
                 $resource_param = json_decode(str_replace("'","\"",$task['resource_param']),true);
                 $task['nnodes']=$resource_param['nnodes'];
                 $task['appExt']=$task['app'];//for bundles
 
             }
-            //handle bundles
             foreach ($scheduled_tasks as $key => $task) {
                 if($task['app']==='xdmod.bundle'){
                     $bundle[$task['resource']][$task['app']][$task['task_param']][]=$key;
@@ -285,7 +286,6 @@ class ArrController extends BaseController
                 foreach ($l1 as $l2) {
                     $i=1;
                     foreach ($l2 as $l3) {
-
                         foreach ($l3 as $key) {
                             $scheduled_tasks[$key]['appExt'].=' '.$i;
                         }
@@ -294,19 +294,18 @@ class ArrController extends BaseController
                 }
             }
 
-            //sort
-            $resource=array();
-            $app=array();
-            $nodes=array();
+            $resource = array();
+            $app = array();
+            $nodes = array();
             foreach ($scheduled_tasks as $key => $task) {
-                $resource[$key]=$task['resource'];
-                $app[$key]=$task['appExt'];
-                $nodes[$key]=$task['nnodes'];
+                $resource[$key] = $task['resource'];
+                $app[$key] = $task['appExt'];
+                $nodes[$key] = $task['nnodes'];
             }
-            array_multisort($resource, SORT_ASC,$app, SORT_ASC, $nodes, SORT_ASC, $scheduled_tasks);//, SORT_ASC,  $nodes)
+            array_multisort($resource, SORT_ASC,$app, SORT_ASC, $nodes, SORT_ASC, $scheduled_tasks);
 
-            $response['response']=$scheduled_tasks;
-            $response['count']=count($scheduled_tasks);
+            $response['response'] = $scheduled_tasks;
+            $response['count'] = count($scheduled_tasks);
             $response['success'] = true;
             $response['message'] = '';
         }
@@ -318,25 +317,25 @@ class ArrController extends BaseController
         return $this->json($response);
     }
 
-    private function _sendReport(Request $request, $user)
+    private function sendReport(Request $request, XDUser $user)
     {
+        $response = [];
         try{
-            $recipient=$user->getEmailAddress();
+            $recipient = $user->getEmailAddress();
 
             $report_type = $request->get('report_type');
             $startDateParam = $request->get('start_date');
             $endDateParam = $request->get('end_date');
 
             $start_date = isset($startDateParam) ?? new DateTime($startDateParam);
-            $end_date = isset($startDateParam) ?? new DateTime($request->get('end_date'));
+            $end_date = isset($endDateParam) ?? new DateTime($endDateParam);
 
-            $reportParam = $this->getStringparam('report_param');
-            $report_param=json_decode($reportParam,true);
+            $reportParam = $this->getStringParam('report_param');
+            $report_param = json_decode($reportParam, true);
 
             AppKernelController::formatNotificationSettingsFromClient($report_param);
 
-
-            $report=new Report(array(
+            $report = new Report(array(
                 'start_date'=>$start_date,
                 'end_date'=>$end_date,
                 'report_type'=>$report_type,
@@ -366,19 +365,17 @@ class ArrController extends BaseController
     private function getResourcesList()
     {
         $ak_db = new \AppKernel\AppKernelDb();
-        $allResources = $ak_db->getResources(date_format(date_sub(date_create(), new DateInterval('P90D')),'Y-m-d'),date_format(date_create(),'Y-m-d'));
+        $allResources = $ak_db->getResources(date_format(date_sub(date_create(), new DateInterval('P90D')),'Y-m-d'), date_format(date_create(), 'Y-m-d'));
         $returnData = array();
         foreach($allResources as $resource)
         {
-            if($resource->visible != 1) continue;
-            $returnData[] =
-                array(
+            if ($resource->visible == 1) {
+                $returnData[] = array(
                     'id' => $resource->id,
                     'fullname' => $resource->name,
                     'name' => $resource->nickname
-                    /*'disabled' =>  !isset($resources[$resource->nickname]),
-                    'checked' => in_array($resource->id,$selectedResourceIds)*/
                 );
+            }
         }
         return $this->json(array(
             'response'=> $returnData,
@@ -389,18 +386,19 @@ class ArrController extends BaseController
 
     private function getAppkernelsList()
     {
+        $reponse = [];
         try{
             $ak_db = new \AppKernel\AppKernelDb();
-            $start_ts=date_timestamp_get(date_sub(date_create(), new DateInterval('P90D')));
-            $end_ts=date_timestamp_get(date_create());
+            $start_ts = date_timestamp_get(date_sub(date_create(), new DateInterval('P90D')));
+            $end_ts = date_timestamp_get(date_create());
 
             $all_app_kernels = $ak_db->getUniqueAppKernels();
-            $returnData=array();
+            $returnData = array();
             foreach($all_app_kernels as $app_kernel)
             {
-                //print_r($app_kernel);
-                if($app_kernel->end_ts > $start_ts)
-                    $returnData[] = array('name' => $app_kernel->name,
+                if ($app_kernel->end_ts > $start_ts)
+                    $returnData[] = array(
+                        'name' => $app_kernel->name,
                         'id' => 'app_kernel_'.$app_kernel->id,
                         'end_ts' => $app_kernel->end_ts
                     );
@@ -419,33 +417,45 @@ class ArrController extends BaseController
 
     private function saveNotificationsSettings($user_id)
     {
+        $response = [];
         try{
             $pdo = DB::factory('database');
-            $curent_tmp_settings=json_decode($_REQUEST['curent_tmp_settings'],true);
+            $curent_tmp_settings = json_decode($_REQUEST['curent_tmp_settings'],true);
             AppKernelController::formatNotificationSettingsFromClient($curent_tmp_settings);
 
-            $send_report_daily=($curent_tmp_settings['daily_report']['send_on_event']==='sendNever')?(0):(1);
-            $send_report_weekly=($curent_tmp_settings['weekly_report']['send_on_event']==='sendNever')?(-$curent_tmp_settings['weekly_report']['send_on']):($curent_tmp_settings['weekly_report']['send_on']);
-            $send_report_monthly=($curent_tmp_settings['monthly_report']['send_on_event']==='sendNever')?(-$curent_tmp_settings['monthly_report']['send_on']):($curent_tmp_settings['monthly_report']['send_on']);
+            $send_report_daily = (
+                $curent_tmp_settings['daily_report']['send_on_event'] === 'sendNever'
+            ) ? (0) : (1);
 
-            $sqlres=$pdo->query('SELECT user_id,send_report_daily,send_report_weekly,send_report_monthly,settings
+            $send_report_weekly = (
+                $curent_tmp_settings['weekly_report']['send_on_event'] === 'sendNever'
+            ) ? (-$curent_tmp_settings['weekly_report']['send_on'])
+            : ($curent_tmp_settings['weekly_report']['send_on']);
+
+            $send_report_monthly = (
+                $curent_tmp_settings['monthly_report']['send_on_event'] === 'sendNever'
+            ) ? (-$curent_tmp_settings['monthly_report']['send_on'])
+            : ($curent_tmp_settings['monthly_report']['send_on']);
+
+            $sqlres = $pdo->query('SELECT user_id,send_report_daily,send_report_weekly,send_report_monthly,settings
                                         FROM mod_appkernel.report
                                         WHERE user_id=:user_id',
-                array(':user_id'=>$user_id));
+                array(':user_id' => $user_id));
 
-            if(count($sqlres)==0){
-                $sqlres=$pdo->insert('INSERT INTO mod_appkernel.report (user_id,send_report_daily,send_report_weekly,send_report_monthly,settings)
+            if (count($sqlres) == 0) {
+                $sqlres = $pdo->insert('INSERT INTO mod_appkernel.report (user_id,send_report_daily,send_report_weekly,send_report_monthly,settings)
                                             VALUES (:user_id,:send_report_daily,:send_report_weekly,:send_report_monthly,:settings)',
                     array(
-                        ':user_id'=>$user_id,
-                        ':send_report_daily'=>$send_report_daily,
-                        ':send_report_weekly'=>$send_report_weekly,
-                        ':send_report_monthly'=>$send_report_monthly,
-                        ':settings'=>json_encode($curent_tmp_settings)//str_replace('"',"'",json_encode($curent_tmp_settings))
-                    ));
+                        ':user_id' => $user_id,
+                        ':send_report_daily' => $send_report_daily,
+                        ':send_report_weekly' => $send_report_weekly,
+                        ':send_report_monthly' => $send_report_monthly,
+                        ':settings'=>json_encode($curent_tmp_settings)
+                    )
+                );
             }
-            else{
-                $sqlres=$pdo->execute('UPDATE mod_appkernel.report
+            else {
+                $sqlres = $pdo->execute('UPDATE mod_appkernel.report
                                             SET send_report_daily=:send_report_daily,send_report_weekly=:send_report_weekly,
                                                 send_report_monthly=:send_report_monthly,settings=:settings
                                             WHERE user_id=:user_id',
@@ -454,14 +464,13 @@ class ArrController extends BaseController
                         ':send_report_daily'=>$send_report_daily,
                         ':send_report_weekly'=>$send_report_weekly,
                         ':send_report_monthly'=>$send_report_monthly,
-                        ':settings'=>json_encode($curent_tmp_settings)//str_replace('"',"'",json_encode($curent_tmp_settings))
-                    ));
+                        ':settings'=>json_encode($curent_tmp_settings)
+                    )
+                );
             }
             $response['data'] = array();
             $response['success'] = true;
-
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             $response['success'] = false;
             $response['errorMessage'] = 'Can not save notification_settings. '.$e->getMessage();
         }
@@ -471,27 +480,28 @@ class ArrController extends BaseController
 
     private function loadNotificationSettings($user_id)
     {
+        $response = [];
         $pdo = DB::factory('database');
-        if(isset($_REQUEST['curent_tmp_settings']))
-            $curent_tmp_settings=json_decode($_REQUEST['curent_tmp_settings'],true);
-        else
+        if (isset($_REQUEST['curent_tmp_settings'])) {
+            $curent_tmp_settings=json_decode($_REQUEST['curent_tmp_settings'], true);
+        } else {
             throw new \Exception('curent_tmp_settings is not set');
-
-        AppKernelController::formatNotificationSettingsFromClient($curent_tmp_settings,true);
+        }
+        AppKernelController::formatNotificationSettingsFromClient($curent_tmp_settings, true);
 
         $sqlres=$pdo->query('SELECT user_id,send_report_daily,send_report_weekly,send_report_monthly,settings
                                         FROM mod_appkernel.report
                                         WHERE user_id=:user_id',
-            array(':user_id'=>$user_id));
+            array(':user_id' => $user_id)
+        );
 
-        if(count($sqlres)==1){
-            $sqlres=$sqlres[0];
-            $settings=json_decode($sqlres['settings'],true);
+        if (count($sqlres) == 1) {
+            $sqlres = $sqlres[0];
+            $settings = json_decode($sqlres['settings'],true);
             foreach ($settings as $key => $value) {
                 $curent_tmp_settings[$key]=$value;
             }
-        }
-        else{
+        } else {
             throw new \Exception('settings is not set in db use default');
         }
         AppKernelController::formatNotificationSettingsForClient($curent_tmp_settings);
@@ -502,29 +512,27 @@ class ArrController extends BaseController
 
     private function loadDefaultNotificationSettings()
     {
+        $response = [];
         try{
             $current_tmp_settings = $this->getStringParam('curent_tmp_settings', true);
 
-            if(isset($current_tmp_settings))
-                $curent_tmp_settings=json_decode($current_tmp_settings,true);
-            else
+            if (isset($current_tmp_settings))
+                $curent_tmp_settings = json_decode($current_tmp_settings,true);
+            else {
                 throw new \Exception('curent_tmp_settings is not set in templates');
+            }
+            AppKernelController::formatNotificationSettingsFromClient($curent_tmp_settings, true);
 
-            AppKernelController::formatNotificationSettingsFromClient($curent_tmp_settings,true);
-
-            $curent_tmp_settings["controlThresholdCoeff"]='1.0';
-            $curent_tmp_settings["resourcesList"]=array();//None means all
-            $curent_tmp_settings["appkernelsList"]=array();//None means all
+            $curent_tmp_settings["controlThresholdCoeff"] = '1.0';
+            $curent_tmp_settings["resourcesList"] = array();
+            $curent_tmp_settings["appkernelsList"] = array();
             AppKernelController::formatNotificationSettingsForClient($curent_tmp_settings);
             $response['data'] = $curent_tmp_settings;
             $response['success'] = true;
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             $response['success'] = false;
             $response['errorMessage'] = 'Can not load load_default_notification_settings. '.$e->getMessage();
         }
         return $this->json($response);
     }
-
-
 }

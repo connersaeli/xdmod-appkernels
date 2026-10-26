@@ -7,7 +7,6 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
-
 /**
  * Class AkrrControllerProvider
  *
@@ -148,7 +147,7 @@ class AkrrController extends BaseController
     #[Route('/tasks/scheduled', methods: ["POST"])]
     public function createTask(Request $request): Response
     {
-        $data = $this->_parseRestArguments($request, array(
+        $data = $this->parseRestArguments($request, array(
             'repeat_in',
             'time_to_start',
             'resource',
@@ -188,7 +187,7 @@ class AkrrController extends BaseController
     public function updateTask(Request $request, int $id): Response
     {
 
-        $data = $this->_parseRestArguments($request, array(
+        $data = $this->parseRestArguments($request, array(
             'time_to_start',
             'repeat_in'
         ));
@@ -269,7 +268,7 @@ class AkrrController extends BaseController
     #[Route('/walltime', methods: ["POST"])]
     public function createWalltime(Request $request)
     {
-        $data = $this->_parseRestArguments($request, array(
+        $data = $this->parseRestArguments($request, array(
             'resource',
             'app_kernel',
             'walltime',
@@ -299,7 +298,7 @@ class AkrrController extends BaseController
     #[Route('/walltime', methods: ["PUT"])]
     public function updateWalltime(Request $request): Response
     {
-        $data = $this->_parseRestArguments($request, array(
+        $data = $this->parseRestArguments($request, array(
             'resource',
             'app_kernel',
             'walltime',
@@ -404,7 +403,7 @@ class AkrrController extends BaseController
     public function updateActiveTask(Request $request, int $id): Response
     {
 
-        $data = $this->_parseRestArguments($request, array(
+        $data = $this->parseRestArguments($request, array(
             'next_check_time'
         ));
 
@@ -620,7 +619,7 @@ class AkrrController extends BaseController
      * @param array $arguments
      * @return array
      */
-    private function _parseRestArguments(Request $request, array $arguments): array
+    private function parseRestArguments(Request $request, array $arguments): array
     {
         $results = array();
         foreach($arguments as $argument) {

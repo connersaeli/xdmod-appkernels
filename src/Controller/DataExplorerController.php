@@ -74,8 +74,6 @@ class DataExplorerController extends BaseController
 
                 $selectedProcessingUnits = array();
 
-                /*checkDateParameters();*/
-
                 $resources = $ak_db->getResources(
                     $startDate,
                     $endDate,
@@ -86,11 +84,8 @@ class DataExplorerController extends BaseController
 
 
                 foreach ($allResources as $resource) {
-                    if ($resource->visible != 1) {
-                        continue;
-                    }
-                    $returnData[] =
-                        array(
+                    if ($resource->visible == 1) {
+                        $returnData[] = array(
                             'text' => $resource->name,
                             'id' => $resource->id,
                             'nick' => $resource->nickname,
@@ -101,15 +96,20 @@ class DataExplorerController extends BaseController
                             'disabled' => !isset($resources[$resource->nickname]),
                             'checked' => in_array($resource->id, $selectedResourceIds)
                         );
+                    }
                 }
-                $returnData = array('totalCount' => 1, 'data' => array(array('nodes' => json_encode($returnData))));
+                $returnData = array(
+                    'totalCount' => 1,
+                    'data' => array(
+                        array('nodes' => json_encode($returnData))
+                    )
+                );
             } elseif (isset($node) && $node === 'pus') {
                 $selectedResourceIds = $this->getArrayParam('selectedResourceIds');
                 $selectedMetrics = $this->getArrayParam('selectedMetrics');
                 $selectedProcessingUnits = $this->getArrayParam('selectedPUCounts');
                 $expandedAppKernels = $this->getArrayParam('expandedAppKernels');
 
-                /*checkDateParameters();*/
                 $selectedProcessingUnitsCount = count($selectedProcessingUnits);
 
                 $processing_units = $ak_db->getProcessingUnits(
@@ -123,13 +123,6 @@ class DataExplorerController extends BaseController
 
                 $pus = array();
                 foreach ($all_processing_units as $processing_unit) {
-                    $disabled = true;
-
-                    foreach ($processing_units as $pu) {
-                        if ($processing_unit->count === $pu->count && $processing_unit->unit === $pu->unit) {
-                            $disabled = false;
-                        }
-                    }
                     $pus[$processing_unit->count] =
                         array(
                             'text' => $processing_unit->count,
@@ -147,7 +140,6 @@ class DataExplorerController extends BaseController
                 $selectedResourceIds = $this->getArrayParam('selectedResourceIds');
                 $selectedMetrics = $this->getArrayParam('selectedMetrics');
                 $expandedAppKernels = $this->getArrayParam('expandedAppKernels');
-                /*checkDateParameters();*/
 
                 $all_app_kernels = $ak_db->getUniqueAppKernels();
                 foreach ($all_app_kernels as $app_kernel) {
@@ -160,10 +152,8 @@ class DataExplorerController extends BaseController
 
                     $children = array();
                     foreach ($all_metrics as $metric) {
-                        $metric_disabled = true;
                         foreach ($metrics as $m) {
                             if ($metric->id === $m->id) {
-                                $metric_disabled = false;
                             }
                         }
 
@@ -222,7 +212,6 @@ class DataExplorerController extends BaseController
             //       which would allow this block to be removed.
             throw $see;
         } catch (\Exception $ex) {
-            /*print_r($ex);*/
             $returnData = array();
         }
 
@@ -237,6 +226,4 @@ class DataExplorerController extends BaseController
         }
         return explode($delim, $paramValue);
     }
-
-
 }

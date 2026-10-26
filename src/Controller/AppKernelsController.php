@@ -279,7 +279,7 @@ class AppKernelsController extends BaseController
                 $node->leaf = (($debugMode && self::TREENODE_INSTANCE == $nodeType) ||
                     (!$debugMode && self::TREENODE_UNITS == $nodeType));
                 $results[] = $node;
-            }  // foreach ( $retval as $row )
+            }
         } else {
             $ak = new \AppKernel\InstanceData;
 
@@ -470,7 +470,7 @@ class AppKernelsController extends BaseController
             array('session_variable', 'png_inline', 'img_tag', 'png', 'svg', 'pdf')
         );
 
-        $dataset = $this->getDatasets($request, $app, true);
+        $dataset = $this->getDatasets($request, true);
         if (!$dataset['success']) {
             throw new Exception('Dataset is empty');
         }
@@ -838,8 +838,7 @@ class AppKernelsController extends BaseController
             $response['success'] = true;
             return $this->json($response);
         } catch (Exception $e) {
-            //i.e. setting is not saved by user so send defaults
-            return $this->getDefaultNotifications($request, $app);
+            return $this->getDefaultNotifications($request);
         }
     }
 
@@ -852,13 +851,15 @@ class AppKernelsController extends BaseController
     #[Route('/notifications', methods: ["PUT"])]
     public function putNotifications(Request $request)
     {
+        $reponse = array();
         try {
             $pdo = \CCR\DB::factory('database');
 
             $curent_tmp_settings = $this->getStringParam($request, 'curent_tmp_settings', true);
             $curent_tmp_settings = json_decode($curent_tmp_settings, true);
 
-            $user_id = $this->getUserFromRequest($request)->getUserID();
+            $user = $this->getXDUser();
+            $user_id = $user->getUserID();
 
             self::formatNotificationSettingsFromClient($curent_tmp_settings);
 
@@ -882,7 +883,7 @@ class AppKernelsController extends BaseController
                         ':send_report_daily' => $send_report_daily,
                         ':send_report_weekly' => $send_report_weekly,
                         ':send_report_monthly' => $send_report_monthly,
-                        ':settings' => json_encode($curent_tmp_settings)//str_replace('"',"'",json_encode($curent_tmp_settings))
+                        ':settings' => json_encode($curent_tmp_settings)
                     )
                 );
             } else {
@@ -896,7 +897,7 @@ class AppKernelsController extends BaseController
                         ':send_report_daily' => $send_report_daily,
                         ':send_report_weekly' => $send_report_weekly,
                         ':send_report_monthly' => $send_report_monthly,
-                        ':settings' => json_encode($curent_tmp_settings)//str_replace('"',"'",json_encode($curent_tmp_settings))
+                        ':settings' => json_encode($curent_tmp_settings)
                     )
                 );
             }
@@ -1166,7 +1167,6 @@ class AppKernelsController extends BaseController
             $all_app_kernels = $ak_db->getUniqueAppKernels();
             $returnData = array();
             foreach ($all_app_kernels as $app_kernel) {
-                //print_r($app_kernel);
                 if ($app_kernel->end_ts > $start_ts) {
                     $returnData[] = array('name' => $app_kernel->name,
                         'id' => 'app_kernel_' . $app_kernel->id,
@@ -1283,7 +1283,7 @@ class AppKernelsController extends BaseController
                 }
                 break;
             case self::TREENODE_APPKERNEL:
-                $node['text'] = $record['ak_name'];/*.' '.date('Y-m-d',$record['start_ts']).' '.date('Y-m-d', $record['end_ts'])*/
+                $node['text'] = $record['ak_name'];
                 $node['ak_id'] = $record['ak_def_id'];
                 if ($resource_first) {
                     $node['resource_id'] = $record['resource_id'];
@@ -1737,13 +1737,9 @@ or "Show Details of Successful Tasks" options to see details on tasks';
             foreach($perfMap->perfMap['runsStatus'] as $resource => $runData) {
                 foreach($runData as $appKernel => $nodeCountData) {
 
-                    // Values that we'll be collecting / summing by node count & date.
                     $values = array();
                     foreach($nodeCountData as $nodeCount => $byDateData) {
                         foreach($byDateData as $date => $runInfo) {
-
-                            // Now that we've reached the data level, initialize or add in the data
-                            // for the columns that we're interested in.
                             foreach($valueCols as $valueCol) {
                                 if (!isset($values[$valueCol])) {
                                     $values[$valueCol] = 0;
